@@ -1,0 +1,7 @@
+pytrends==4.9.2
+pandas==2.0.3
+numpy==1.25.2
+matplotlib==3.7.2
+xgboost==1.7.6
+requests==2.31.0
+beautifulsoup4==4.12.2
