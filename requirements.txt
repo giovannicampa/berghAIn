@@ -5,3 +5,5 @@ matplotlib==3.7.2
 xgboost==1.7.6
 requests==2.31.0
 beautifulsoup4==4.12.2
+pre-commit==3.3.3
+black==23.7.0
