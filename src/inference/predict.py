@@ -35,8 +35,11 @@ class Predictor:
         bh_parser = BHParser(club_name="Berghain", club_page_url="https://www.berghain.berlin/en/program/archive")
         followers = bh_parser.get_followers_at_date(date)
 
-        features = xgb.DMatrix(np.array(followers).reshape(1, -1))
-        return features
+        if followers:
+            features = xgb.DMatrix(np.array(followers).reshape(1, -1))
+            return features
+        else:
+            return None
 
 
 if __name__ == "__main__":
