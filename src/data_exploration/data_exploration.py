@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 HOUR = 23
 
 
-def get_features():
+def get_features_historical():
     # Follower data from saved files
     parser = BHParser()
     followers_by_date = parser.gather_artist_data()
@@ -73,6 +73,6 @@ def plot_data(followers_by_date, weather_data_by_date, trends_data, messages_tim
 
 
 if __name__ == "__main__":
-    followers_by_date, weather_data_by_date, trends_data = get_features()
+    followers_by_date, weather_data_by_date, trends_data = get_features_historical()
     messages_time = get_targets()
     plot_data(followers_by_date, weather_data_by_date, trends_data, messages_time)

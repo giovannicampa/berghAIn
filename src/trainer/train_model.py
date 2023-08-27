@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import mean_squared_error
 from datetime import datetime
 from src.utils.telegram_data_parser import queue_estimates
-from src.data_exploration.data_exploration import get_features, get_targets
+from src.data_exploration.data_exploration import get_features_historical, get_targets
 import matplotlib.pyplot as plt
 
 class Trainer:
@@ -22,7 +22,7 @@ class Trainer:
         }
 
     def load_data(self, weather: bool = True, followers: bool = True, trends: bool = True):
-        followers_by_date, weather_data_by_date, trends_data = get_features()
+        followers_by_date, weather_data_by_date, trends_data = get_features_historical()
         messages_time = get_targets()
 
         self.data = pd.merge(followers_by_date, messages_time, on ='date')
