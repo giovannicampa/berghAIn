@@ -139,12 +139,12 @@ def queue_estimate_from_text(text: str) -> int:
     else:
         return 0
 
-# def event_date(ts):
+def event_date(ts):
 
-#     if ts.hour > 0:
-#         return (ts - timedelta(days=1)).date
-#     else:
-#         return ts.date
+    if ts.hour > 0:
+        return (ts - timedelta(days=1)).date()
+    else:
+        return ts.date()
 
 
 def queue_estimates(path, log = False):
@@ -161,7 +161,10 @@ def queue_estimates(path, log = False):
     messages_time = messages.loc[(condition_hour & condition_year), :]
 
     messages_time["prediction"] = messages_time.text.apply(lambda x: queue_estimate_from_text(x))
-    # messages_time["date"] = messages_time["timestamp"].date.apply(lambda ts: event_date(ts))
+    dates = []
+    for i, row in messages_time.iterrows():
+        dates.append(event_date(row.timestamp))
+    messages_time["date"] = dates
 
     if log is True:
         for i, row in messages_time[messages_time.prediction > 0].iterrows():

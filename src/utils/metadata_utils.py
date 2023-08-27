@@ -1,10 +1,11 @@
-from pytrends.request import TrendReq
+import os
+
 import pandas as pd
 import requests
-
+from pytrends.request import TrendReq
 
 # Replace 'YOUR_API_KEY' with your actual API key from WeatherAPI
-API_KEY = ""
+API_KEY = os.environ["WEATHER_API_KEY"]
 CHUNK_SIZE = 35
 
 

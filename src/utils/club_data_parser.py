@@ -1,3 +1,4 @@
+from datetime import datetime
 import glob
 import os
 import pandas as pd
@@ -103,7 +104,7 @@ class ClubParser(ABC):
 
         for date in data.date.unique():
             followers = data[data.date == date].followers.sum()
-            followers_by_date.append({"date": pd.Timestamp(date), "followers": followers})
+            followers_by_date.append({"date": datetime.strptime(date, '%Y-%m-%d').date(), "followers": followers})
 
         followers_by_date = pd.DataFrame(followers_by_date)
 
