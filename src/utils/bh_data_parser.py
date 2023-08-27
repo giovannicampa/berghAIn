@@ -87,7 +87,7 @@ class BHParser(ClubParser):
         else:
             data_month = pd.read_csv(location_dates_data)
 
-        followers = data_month[data_month.date == date.date()]
+        followers = data_month[data_month.date == date]
         if followers.shape[0] == 0:
             print("No event found for today")
         return followers
