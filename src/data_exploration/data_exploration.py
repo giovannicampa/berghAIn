@@ -3,13 +3,14 @@ from src.utils.metadata_utils import (
     get_weather_data,
 )
 from src.utils.bh_data_parser import BHParser
+from src.utils.telegram_data_parser import queue_estimates
 import pandas as pd
 import matplotlib.pyplot as plt
 
 HOUR = 23
 
 
-def get_data():
+def get_features():
     # Follower data from saved files
     parser = BHParser()
     followers_by_date = parser.gather_artist_data()
@@ -41,8 +42,13 @@ def get_data():
 
     return followers_by_date, weather_data_by_date, trends_data
 
+def get_targets():
 
-def plot_data(followers_by_date, weather_data_by_date, trends_data):
+    path = "data/berghain/telegram/data.csv"
+    messages_time = queue_estimates(path)
+    return messages_time
+
+def plot_data(followers_by_date, weather_data_by_date, trends_data, messages_time):
     plt.style.use("ggplot")
     plt.rc("font", size=18)
     fig, (ax1, ax2) = plt.subplots(2, figsize=(10, 6))
@@ -67,5 +73,6 @@ def plot_data(followers_by_date, weather_data_by_date, trends_data):
 
 
 if __name__ == "__main__":
-    followers_by_date, weather_data_by_date, trends_data = get_data()
-    plot_data(followers_by_date, weather_data_by_date, trends_data)
+    followers_by_date, weather_data_by_date, trends_data = get_features()
+    messages_time = get_targets()
+    plot_data(followers_by_date, weather_data_by_date, trends_data, messages_time)
