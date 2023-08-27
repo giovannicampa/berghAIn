@@ -79,26 +79,29 @@ class BHParser(ClubParser):
         """
 
         month_frmt = (str(date.month)).zfill(2)
-        location_dates_data = os.path.join("data", self.club_name, self.sc_folder_name, f"{date.year}_{month_frmt}.csv")
+        location_dates_data = os.path.join(
+            "data", self.club_name, self.sc_folder_name, f"{date.year}_{month_frmt}.csv"
+        )
         if not os.path.exists(location_dates_data):
             url_to_parse = f"{self.club_page_url}/{date.year}/{month_frmt}/"
             data_month = self.extract_content_from_page(url_to_parse)
             self.save_data(data_month, date.year, month_frmt)
         else:
-            data_month = pd.read_csv(location_dates_data)
+            data_month = pd.read_csv(location_dates_data, index_col=0, parse_dates=["date"])
 
-        followers = data_month[data_month.date == date]
-        if followers.shape[0] == 0:
+        data_month.date = data_month.date.dt.date
+
+        if data_month.shape[0] == 0:
             print("No event found for today")
+
+        followers = data_month[data_month.date == date].followers.sum()
         return followers
 
     def save_data(self, data_month: pd.DataFrame, year: int, month_frmt: str):
         """
         Saves the data at the corresponding path
         """
-        data_month.to_csv(
-            os.path.join("data", self.club_name, self.sc_folder_name, f"{year}_{month_frmt}.csv")
-        )
+        data_month.to_csv(os.path.join("data", self.club_name, self.sc_folder_name, f"{year}_{month_frmt}.csv"))
 
 
 if __name__ == "__main__":
