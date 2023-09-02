@@ -43,6 +43,8 @@ distance_time_multiplier = 2/60 # where 2 is [min/meter]
 
 
 def parse_telegram_chat_export(file_path):
+
+    date_format = "%d.%m.%Y %H:%M:%S"
     messages_list = []
 
     with open(file_path, "r", encoding="utf-8") as file:
@@ -62,7 +64,7 @@ def parse_telegram_chat_export(file_path):
                 text = text.text
                 text = text.replace("\n", "")
                 text = text.replace("       ", "")
-                timestamp = pd.Timestamp(timestamp["title"])
+                timestamp = pd.to_datetime(timestamp["title"][0:19], format=date_format)
                 messages_list.append({"sender": sender, "text": text, "timestamp": timestamp})
 
     return pd.DataFrame(messages_list)
