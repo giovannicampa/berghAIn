@@ -24,24 +24,24 @@ class Predictor:
 
     # Predict using the loaded model
     def predict(self, date):
-        features = self.get_features_at_date(date)
+        features, artists_data = self.get_features_at_date(date)
         if features:
             predictions = self.model.predict(features)
-            return predictions
+            return predictions, artists_data
         else:
-            return None
+            return None, None
 
     def get_features_at_date(self, date):
         bh_parser = BHParser(club_name="Berghain", club_page_url="https://www.berghain.berlin/en/program/archive")
-        followers = bh_parser.get_followers_at_date(date)
+        followers, artists_data = bh_parser.get_followers_at_date(date)
 
         if followers:
             features = xgb.DMatrix(np.array(followers).reshape(1, -1))
-            return features
+            return features, artists_data
         else:
-            return None
+            return None, None
 
 
 if __name__ == "__main__":
     pred = Predictor(club_name="berghain")
-    prediction = pred.predict(datetime(2023, 8, 26).date())
+    prediction, artists_data = pred.predict(datetime(2023, 8, 26).date())

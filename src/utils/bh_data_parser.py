@@ -92,12 +92,13 @@ class BHParser(ClubParser):
         data_month.date = data_month.date.dt.date
 
         index_today = data_month.date == date
+        artists_data = data_month[index_today]
         if sum(index_today) == 0:
             print("No event found for today")
             return None
         else:
-            followers = data_month[index_today].followers.sum()
-            return followers
+            followers = artists_data.followers.sum()
+            return followers, artists_data
 
     def save_data(self, data_month: pd.DataFrame, year: int, month_frmt: str):
         """
