@@ -34,6 +34,7 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
             columns={"time": "date", "precipitation (mm)": "precipitation", "temperature_2m (°C)": "temperature"},
             inplace=True,
         )
+        weather_data['date'] = weather_data['date'].dt.date
 
     # Get newer data from API
     else:
