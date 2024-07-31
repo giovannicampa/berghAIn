@@ -16,7 +16,7 @@ import functools as ft
 
 class Trainer:
     def __init__(self, metrics: list, loss: list, model=str):
-        models = {"knn": KNeighborsRegressor, "random_forest": RandomForestRegressor, "xgboost": xgb}
+        models = {"knn": KNeighborsRegressor, "random_forest": RandomForestRegressor, "xgboost": xgb.XGBRegressor}
         self.model = models[model]()
         self.metrics = metrics
         self.loss = loss
@@ -58,14 +58,14 @@ class Trainer:
             "min_weight_fraction_leaf": [0.0, 0.01, 0.05],
         }
 
-        self.param_grid[xgb] = {
+        self.param_grid[xgb.XGBRegressor] = {
             "objective": [self.loss],  # Regression task
             "max_depth": [None, 1, 5, 20, 30, 50, 70],
             "learning_rate": [0.1, 0.01, 0.001],
             "n_estimators": [5, 10, 25, 50, 100, 150],
         }
 
-        self.param_grid[KNeighborsRegressor] = params_knn = {
+        self.param_grid[KNeighborsRegressor] = {
             "n_neighbors": [
                 1,
                 3,
@@ -181,7 +181,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    trainer = Trainer(loss="reg:squarederror", metrics=["msq"], model="knn")
+    trainer = Trainer(loss="reg:squarederror", metrics=["msq"], model="xgboost")
     data = trainer.load_data(weather=True)
     X_train, X_test, y_train, y_test, dtrain, dtest = trainer.prepare_data(
         data, target="max_waiting_time", scale_features=True
