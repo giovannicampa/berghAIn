@@ -1,5 +1,6 @@
 import os
-from datetime import datetime, timedelta
+from glob import glob
+from datetime import datetime, timedelta, date
 
 import numpy as np
 import pandas as pd
@@ -19,30 +20,52 @@ AVG_TMP = (TEMP_MAX + TEMP_MIN) / 2  # Average temperature
 AMP = (TEMP_MAX - TEMP_MIN) / 2  # Curve amplitude
 
 T = 365  # Period of the sinusoid
+HOUR = 23
 
 
-def get_weather_data(city="Berlin", start_date="", end_date=""):
+def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
     base_url = "http://api.weatherapi.com/v1/history.json"
     weather_data = []
 
-    while start_date <= end_date:
-        # Calculate the end date for the current chunk
-        chunk_end_date = min(end_date, start_date + pd.Timedelta(days=CHUNK_SIZE - 1))
+    # Load saved data for historical training
+    if start_date < date.today() - timedelta(2):
+        weather_data = pd.concat([pd.read_csv(file, parse_dates=["time"]) for file in glob("data/wetter_berlin/*.csv")])
+        weather_data.rename(
+            columns={"time": "date", "precipitation (mm)": "precipitation", "temperature_2m (°C)": "temperature"},
+            inplace=True,
+        )
 
-        params = {
-            "key": API_KEY,
-            "q": city,
-            "dt": start_date.strftime("%Y-%m-%d"),
-            "end_dt": chunk_end_date.strftime("%Y-%m-%d"),
-        }
+    # Get newer data from API
+    else:
+        while start_date <= end_date:
+            # Calculate the end date for the current chunk
+            chunk_end_date = min(end_date, start_date + pd.Timedelta(days=CHUNK_SIZE - 1))
 
-        response = requests.get(base_url, params=params)
+            params = {
+                "key": API_KEY,
+                "q": city,
+                "dt": start_date.strftime("%Y-%m-%d"),
+                "end_dt": chunk_end_date.strftime("%Y-%m-%d"),
+            }
 
-        if response.status_code == 200:
-            data = response.json()
-            weather_data.extend(data["forecast"]["forecastday"])
+            response = requests.get(base_url, params=params)
 
-        start_date += pd.Timedelta(days=CHUNK_SIZE)
+            if response.status_code == 200:
+                data = response.json()
+                weather_data.extend(data["forecast"]["forecastday"])
+
+            start_date += pd.Timedelta(days=CHUNK_SIZE)
+
+        weather_data_by_date = [
+            {
+                "date": pd.Timestamp(day["date"]),
+                "precipitation": day["hour"][HOUR]["precip_mm"],
+                "temperature": day["hour"][HOUR]["temp_c"],
+            }
+            for day in weather_data
+            if len(day["hour"]) > 0
+        ]
+        weather_data_by_date = pd.DataFrame(weather_data_by_date)
 
     return weather_data
 
@@ -61,7 +84,7 @@ def temperature_on_day(current_date) -> int:
     Returns the temperature for a given day.
     Can be uses to generate training and inference data.
     """
-    peak_day = datetime(current_date.year, 7, 15)  # Hottest day
+    peak_day = date(current_date.year, 7, 15)  # Hottest day
     temperature = AMP * np.sin(2 * np.pi / T * ((current_date - peak_day).days + T / 4)) + AVG_TMP
     return temperature
 
@@ -88,7 +111,7 @@ def temperature_trend(start_date=None, end_date=None) -> pd.DataFrame:
 
 if __name__ == "__main__":
     # Define the start and end dates
-    start_date = datetime(2023, 4, 1)
-    end_date = datetime(2025, 4, 1)
+    start_date = date(2023, 4, 1)
+    end_date = date(2025, 4, 1)
 
     trend = temperature_trend(start_date, end_date)
