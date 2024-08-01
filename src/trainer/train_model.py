@@ -1,17 +1,18 @@
-import os
+import functools as ft
+import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import xgboost as xgb
+
+from datetime import datetime
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.metrics import mean_squared_error
-from datetime import datetime
-from src.utils.telegram_data_parser import queue_estimates
+
 from src.data_exploration.data_exploration import get_features_historical, get_targets
-import matplotlib.pyplot as plt
-import functools as ft
 
 
 class Trainer:
@@ -22,7 +23,7 @@ class Trainer:
         self.loss = loss
         self.params = {}
 
-        self.params[xgb] = {
+        self.params[xgb.XGBRegressor] = {
             "objective": self.loss,  # Regression task
             "max_depth": 3,  # Maximum depth of a tree
             "learning_rate": 0.1,  # Step size for each iteration
@@ -121,13 +122,9 @@ class Trainer:
         return X_train, X_test, y_train, y_test, dtrain, dtest
 
     def train(self, dtrain):
-        # model = RandomForestRegressor(n_estimators=100, random_state=42)
-        # model = RandomForestRegressor(**self.params[RandomForestRegressor], random_state=42)
-
         # Train the model
         self.model.fit(X_train, y_train)
 
-        # model = xgb.train(params=self.params, dtrain=dtrain)
         return self.model
 
     def evaluate(self, model, X, dtest, y_test, subset):
@@ -146,9 +143,6 @@ class Trainer:
         print(f"Root Mean Squared Error on {subset}: {rmse*60:.2f} minutes")
 
     def parameter_search(self, X_train, X_test, y_test, y_train, save, *args, **kwargs):
-        # model = xgb.XGBRegressor(objective='reg:squarederror')
-        # model = RandomForestRegressor()
-
         param_grid = self.param_grid[type(self.model)]
 
         # Perform grid search using cross-validation
