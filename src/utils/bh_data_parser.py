@@ -1,7 +1,11 @@
+import argparse
 import os
+
 from datetime import datetime
+from glob import glob
 
 import pandas as pd
+
 from bs4 import BeautifulSoup
 
 from src.utils.club_data_parser import ClubParser
@@ -62,7 +66,13 @@ class BHParser(ClubParser):
         """
         data = []
         for year in year_list:
-            for month in range(1, 12):
+
+            existing_data = glob(os.path.join("data", self.club_name, self.sc_folder_name) + f"*/{year}*.csv")
+            existing_months = [int(i[-6:-4]) for i in existing_data]
+
+            for month in range(1, 13):
+                if month in existing_months: continue
+                print(f"Currently processing {year}/{month}")
                 month_frmt = (str(month)).zfill(2)
                 url_to_parse = f"{self.club_page_url}/{year}/{month_frmt}/"
                 data_month = self.extract_content_from_page(url_to_parse)
@@ -100,14 +110,22 @@ class BHParser(ClubParser):
             followers = artists_data.followers.sum()
             return followers, artists_data
 
+    def generate_path(self, year: int, month: int):
+        return os.path.join("data", self.club_name, self.sc_folder_name, f"{year}_{month}.csv")
+
     def save_data(self, data_month: pd.DataFrame, year: int, month_frmt: str):
         """
         Saves the data at the corresponding path
         """
-        data_month.to_csv(os.path.join("data", self.club_name, self.sc_folder_name, f"{year}_{month_frmt}.csv"))
+        path = self.generate_path(year, month_frmt)
+        data_month.to_csv(path)
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--years", type=str, nargs="+", default=["2024"])
+    args =  parser.parse_args()
+
     bh_parser = BHParser(club_name="Berghain", club_page_url="https://www.berghain.berlin/en/program/archive")
-    data = bh_parser.extract_and_save_all(year_list=[2023])
-    data.to_csv(os.path.join("data", {bh_parser.club_name}, {bh_parser.sc_folder_name}, "test_data.csv"))
+    data = bh_parser.extract_and_save_all(year_list=args.years)
+    data.to_csv(os.path.join("data", bh_parser.club_name, bh_parser.sc_folder_name, "test_data.csv"))
