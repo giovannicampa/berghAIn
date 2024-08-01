@@ -1,4 +1,8 @@
 from datetime import datetime
+from typing import List
+
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.utils.metadata_utils import (
     get_google_trends_data,
@@ -8,27 +12,36 @@ from src.utils.metadata_utils import (
 )
 from src.utils.bh_data_parser import BHParser
 from src.utils.telegram_data_parser import queue_estimates
-import pandas as pd
-import matplotlib.pyplot as plt
 
-important_dates_csd = ["2021-7-24", "2022-7-23", "2023-7-22"]
-important_dates_easter = [
-    "2021-4-2",
-    "2021-4-3",
-    "2021-4-4",
-    "2021-4-5",
-    "2022-4-15",
-    "2022-4-16",
-    "2022-4-17",
-    "2022-4-18",
-    "2023-4-7",
-    "2023-4-8",
-    "2023-4-9",
-    "2023-4-10",
-]
 
-important_dates = important_dates_csd + important_dates_easter
-important_dates = [datetime.strptime(date, "%Y-%m-%d") for date in important_dates]
+def get_important_dates(years_list: List):
+    """Returns list of dates that have a high affluence."""
+    important_dates_csd = ["2021-7-24", "2022-7-23", "2023-7-22"]
+    important_dates_easter = [
+        "2021-4-2",
+        "2021-4-3",
+        "2021-4-4",
+        "2021-4-5",
+        "2022-4-15",
+        "2022-4-16",
+        "2022-4-17",
+        "2022-4-18",
+        "2023-4-7",
+        "2023-4-8",
+        "2023-4-9",
+        "2023-4-10",
+    ]
+
+    important_dates = important_dates_csd + important_dates_easter
+    important_dates = [datetime.strptime(date, "%Y-%m-%d") for date in important_dates]
+
+    nye = [datetime.strptime(f"{year}-12-31", "%Y-%m-%d") for year in years_list]
+    christmas = [datetime.strptime(f"{year}-12-24", "%Y-%m-%d") for year in years_list]
+
+    important_dates += nye
+    important_dates += christmas
+
+    return important_dates
 
 
 def get_features_historical(start_date=None, end_date=None, weather=False, followers=True, trends=False):
@@ -56,7 +69,6 @@ def get_features_historical(start_date=None, end_date=None, weather=False, follo
     if trends:
         trends_data = get_google_trends_data(
             search_term,
-            #  timeframe=['2022-09-04 2022-09-10', '2022-09-18 2022-09-24'],
             geo="DE",
         )
 
@@ -64,19 +76,15 @@ def get_features_historical(start_date=None, end_date=None, weather=False, follo
 
 
 def get_targets():
-    path = "data/berghain/telegram/data.csv"
-    messages_time = queue_estimates(path)
+    """Returns the labeled targets"""
+    messages_time = queue_estimates()
     return messages_time
 
 
 def plot_data(followers_by_date, weather_data_by_date, trends_data, temperature, messages_time):
     # Add christmas and NYE
     years_list = range(followers_by_date.date.min().year - 1, followers_by_date.date.max().year + 1)
-    nye = [datetime.strptime(f"{year}-12-31", "%Y-%m-%d") for year in years_list]
-    christmas = [datetime.strptime(f"{year}-12-24", "%Y-%m-%d") for year in years_list]
-
-    important_dates += nye
-    important_dates += christmas
+    important_dates = get_important_dates(years_list)
 
     plt.style.use("ggplot")
     plt.rc("font", size=18)
