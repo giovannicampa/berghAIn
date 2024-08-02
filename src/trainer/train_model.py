@@ -16,12 +16,13 @@ from src.data_exploration.data_exploration import get_features_historical, get_t
 
 
 class Trainer:
-    def __init__(self, metrics: list, loss: list, model=str):
+    def __init__(self, metrics: list, loss: list, model=str, club=str):
         models = {"knn": KNeighborsRegressor, "random_forest": RandomForestRegressor, "xgboost": xgb.XGBRegressor}
         self.model = models[model]()
         self.metrics = metrics
         self.loss = loss
         self.params = {}
+        self.club = club
 
         self.params[xgb.XGBRegressor] = {
             "objective": self.loss,  # Regression task
@@ -88,7 +89,7 @@ class Trainer:
             "metric": ["euclidean", "manhattan", "minkowski", "chebyshev"],  # The distance metric to use.
         }
 
-        self.features = ["followers", "hours_since_opening", "temperature"]
+        self.features = ["followers", "precipitation", "temperature"]
 
     def load_data(self, weather: bool = False, followers: bool = True, trends: bool = False):
         followers_by_date, weather_data_by_date, trends_data, temperature = get_features_historical(
@@ -105,7 +106,7 @@ class Trainer:
         return self.data
 
     def prepare_data(self, data, target, scale_features=False):
-        data = data[data.prediction != 0]
+        data = data[data.max_waiting_time != 0]
         X = data.drop(target, axis=1)[self.features]
         y = data[target]
 
@@ -158,7 +159,8 @@ class Trainer:
         if save:
             current_datetime = datetime.now().strftime("%Y%m%d%H%M%S")
             model_filename = f"xgboost_model_{current_datetime}.model"
-            best_estimator.save_model(os.path.join("models", model_filename))
+            os.makedirs("models", self.club, exist_ok=True)
+            best_estimator.save_model(os.path.join("models", self.club, model_filename))
 
         # Make predictions on the test set using the best estimator
         y_pred = best_estimator.predict(X_test)
@@ -175,7 +177,7 @@ class Trainer:
 
 
 if __name__ == "__main__":
-    trainer = Trainer(loss="reg:squarederror", metrics=["msq"], model="xgboost")
+    trainer = Trainer(loss="reg:squarederror", metrics=["msq"], model="xgboost", club="berghain")
     data = trainer.load_data(weather=True)
     X_train, X_test, y_train, y_test, dtrain, dtest = trainer.prepare_data(
         data, target="max_waiting_time", scale_features=True
@@ -183,4 +185,4 @@ if __name__ == "__main__":
     model = trainer.train(dtrain)
     trainer.evaluate(model, X_test, dtest, y_test, subset="test")
     trainer.evaluate(model, X_train, dtrain, y_train, subset="train")
-    trainer.parameter_search(X_train, X_test, y_test, y_train, save=False)
+    trainer.parameter_search(X_train, X_test, y_test, y_train, save=True)

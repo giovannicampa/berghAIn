@@ -55,6 +55,8 @@ LOCATION_TIME = {"kiosk": 1.5, "hellweg": 4.5, "karree": 3, "wriezener": 3, "met
 
 DISTANCE_TIME_FACTOR = 2 / 60  # where 2 is [min/meter]
 
+MAX_WAITING_TIME = 10
+
 weekday_names = {4: "Friday", 5: "Saturday", 6: "Sunday"}
 
 KEYWORDS_HOURS = ["hour", "hrs", "h", "stunden"]
@@ -262,7 +264,7 @@ def scale_prediction(row):
     if row.hours_since_opening not in relative_queue_friday.keys():
         return row.prediction
     else:
-        return row.prediction / relative_queue_friday[row.hours_since_opening]
+        return min(row.prediction / relative_queue_friday[row.hours_since_opening], MAX_WAITING_TIME)
 
 
 def queue_estimates(estimate_type: str = None, log=False) -> pd.DataFrame:
@@ -337,7 +339,10 @@ def queue_estimates(estimate_type: str = None, log=False) -> pd.DataFrame:
         for i, row in messages_time[messages_time.prediction > 0].iterrows():
             print(f"{row.text}, {row.prediction}\n")
 
-    return messages_time
+    messages_time.reset_index(drop=True, inplace=True)
+
+    messages_time_grouped = messages_time.groupby("date")["max_waiting_time"].mean().reset_index()
+    return messages_time_grouped
 
 
 if __name__ == "__main__":

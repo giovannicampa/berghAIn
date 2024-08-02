@@ -34,7 +34,7 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
             columns={"time": "date", "precipitation (mm)": "precipitation", "temperature_2m (°C)": "temperature"},
             inplace=True,
         )
-        weather_data['date'] = weather_data['date'].dt.date
+        weather_data["date"] = weather_data["date"].dt.date
 
     # Get newer data from API
     else:
@@ -68,7 +68,14 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
         ]
         weather_data_by_date = pd.DataFrame(weather_data_by_date)
 
-    return weather_data
+    weather_data = weather_data[(weather_data["date"] >= start_date) & (weather_data["date"] <= end_date)]
+
+    weather_data_grouped = weather_data.groupby("date")["temperature"].min().reset_index()
+    weather_data_grouped["precipitation"] = (
+        weather_data.groupby("date")["precipitation"].max().reset_index()["precipitation"]
+    )
+
+    return weather_data_grouped
 
 
 def get_google_trends_data(keyword, timeframe="today 12-m", geo="", gprop=""):

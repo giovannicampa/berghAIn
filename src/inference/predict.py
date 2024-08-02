@@ -6,7 +6,7 @@ import numpy as np
 import xgboost as xgb
 
 from src.utils.bh_data_parser import BHParser
-
+from src.utils.metadata_utils import get_weather_data
 
 class Predictor:
     def __init__(self, club_name):
@@ -34,9 +34,14 @@ class Predictor:
     def get_features_at_date(self, date):
         bh_parser = BHParser(club_name="Berghain", club_page_url="https://www.berghain.berlin/en/program/archive")
         followers, artists_data = bh_parser.get_followers_at_date(date)
+        weather = get_weather_data(city = "Berlin", start_date=date, end_date=date)
+        temperature = weather.temperature.min()
+        precipitation = weather.precipitation.max()
+
+        features = np.array([followers, temperature, precipitation]).reshape(1, -1)
 
         if followers:
-            features = xgb.DMatrix(np.array(followers).reshape(1, -1))
+            features = xgb.DMatrix(features)
             return features, artists_data
         else:
             return None, None
