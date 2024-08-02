@@ -59,7 +59,7 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
 
         weather_data_by_date = [
             {
-                "date": pd.Timestamp(day["date"]),
+                "date": datetime.strptime(day["date"], "%Y-%m-%d").date(),
                 "precipitation": day["hour"][HOUR]["precip_mm"],
                 "temperature": day["hour"][HOUR]["temp_c"],
             }
@@ -68,11 +68,13 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
         ]
         weather_data_by_date = pd.DataFrame(weather_data_by_date)
 
-    weather_data = weather_data[(weather_data["date"] >= start_date) & (weather_data["date"] <= end_date)]
+    weather_data_by_date = weather_data_by_date[
+        (weather_data_by_date["date"] <= start_date) & (weather_data_by_date["date"] >= end_date)
+    ]
 
-    weather_data_grouped = weather_data.groupby("date")["temperature"].min().reset_index()
+    weather_data_grouped = weather_data_by_date.groupby("date")["temperature"].min().reset_index()
     weather_data_grouped["precipitation"] = (
-        weather_data.groupby("date")["precipitation"].max().reset_index()["precipitation"]
+        weather_data_by_date.groupby("date")["precipitation"].max().reset_index()["precipitation"]
     )
 
     return weather_data_grouped

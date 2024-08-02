@@ -1,4 +1,5 @@
 import functools as ft
+import json
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -143,6 +144,19 @@ class Trainer:
         rmse = np.sqrt(mean_squared_error(y_test, y_pred))
         print(f"Root Mean Squared Error on {subset}: {rmse*60:.2f} minutes")
 
+    def save_model(self, best_estimator):
+        """Saves the models and the list of features"""
+
+        current_datetime = datetime.now().strftime("%Y_%m_%d_%H_%M")
+        model_filename = "xgboost_model.model"
+        save_dir = os.path.join("models", self.club, current_datetime)
+        os.makedirs(save_dir, exist_ok=True)
+        best_estimator.save_model(os.path.join(save_dir, model_filename))
+
+        # Save the feature file
+        with open(os.path.join(save_dir, "features.json"), "w") as json_file:
+            json.dump(self.features, json_file)
+
     def parameter_search(self, X_train, X_test, y_test, y_train, save, *args, **kwargs):
         param_grid = self.param_grid[type(self.model)]
 
@@ -157,10 +171,7 @@ class Trainer:
         print(best_params)
 
         if save:
-            current_datetime = datetime.now().strftime("%Y%m%d%H%M%S")
-            model_filename = f"xgboost_model_{current_datetime}.model"
-            os.makedirs("models", self.club, exist_ok=True)
-            best_estimator.save_model(os.path.join("models", self.club, model_filename))
+            self.save_model(best_estimator)
 
         # Make predictions on the test set using the best estimator
         y_pred = best_estimator.predict(X_test)
