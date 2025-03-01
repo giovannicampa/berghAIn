@@ -73,9 +73,9 @@ class ClubParser(ABC):
 
             followers = int(html[index_start:index_end])
         except:
-            return 0
+            return 0, ""
 
-        return followers
+        return followers, page.url
 
     def gather_artist_data(self, path_to_data: str = None) -> pd.DataFrame:
         """

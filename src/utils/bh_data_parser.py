@@ -53,7 +53,7 @@ class BHParser(ClubParser):
 
                 artist_data["date"] = date_object
                 artist_data["name"] = artist
-                artist_data["followers"] = self.parse_followers(artist)
+                artist_data["followers"], artist_data["soundcloud_url"] = self.parse_followers(artist)
                 artist_data["location"] = party_location
 
                 historical_data.append(artist_data)
