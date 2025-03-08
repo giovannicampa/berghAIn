@@ -1,7 +1,6 @@
 import os
 from datetime import datetime
 from glob import glob
-from typing import Dict
 
 import numpy as np
 import json
@@ -36,31 +35,30 @@ class Predictor:
     # Predict using the loaded model
     def predict(self, date):
         features, artists_data = self.get_features_at_date(date)
-        if features:
-            predictions = self.model.predict(features)
-            return predictions, artists_data
+        if features["features_matrix"]:
+            predictions = self.model.predict(features["features_matrix"])
+            return predictions, features, artists_data
         else:
-            return None, None
+            return None, None, None
 
     def get_features_at_date(self, date):
         bh_parser = BHParser(club_name="Berghain", club_page_url="https://www.berghain.berlin/en/program/archive")
 
-        features = []
-        if "followers" in self.required_features:
-            followers, artists_data = bh_parser.get_followers_at_date(date)
-            features.append(followers)
+        features = {}
+        features_dict = {}
 
-        weather = get_weather_data(city="Berlin", start_date=date, end_date=date)
-        if "temperature" in self.required_features:
-            features.append(weather.temperature.min())
+        followers, artists_data = bh_parser.get_followers_at_date(date)
+        weather = get_weather_data(city="Berlin", start_date=date)
 
-        if "precipitation" in self.required_features:
-            features.append(weather.precipitation.max())
+        features_dict["followers"] = followers
+        features_dict["temperature"] = weather.temperature.min()
+        features_dict["precipitation"] = weather.precipitation.max()
 
-        features = np.array(features).reshape(1, -1)
+        features_matrix = np.array([features_dict[feature] for feature in features_dict if feature in self.required_features]).reshape(1, -1)
 
         if followers:
-            features = xgb.DMatrix(features)
+            features["features_matrix"] = xgb.DMatrix(features_matrix)
+            features["features_dict"] = features_dict
             return features, artists_data
         else:
             return None, None
@@ -68,4 +66,6 @@ class Predictor:
 
 if __name__ == "__main__":
     pred = Predictor(club_name="berghain")
-    prediction, artists_data = pred.predict(datetime(2023, 8, 26).date())
+
+    prediction, features, artists_data = pred.predict(datetime(2025, 3, 2).date())
+    prediction, features, artists_data = pred.predict(datetime(2023, 8, 26).date())

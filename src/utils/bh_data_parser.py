@@ -86,25 +86,25 @@ class BHParser(ClubParser):
 
         return data
 
-    def get_followers_at_date(self, date: datetime.date):
+    def get_followers_at_date(self, date_selected: datetime.date):
         """
         Given a date, it finds the corresponding follower number
         """
         logging.log(level=1, msg="Getting the data for the event starting at the previous day")
 
         # The events are listed to start on the evening of the previous day
-        date = date - timedelta(days=1)
+        date_selected = date_selected - timedelta(days=1)
 
-        month_frmt = (str(date.month)).zfill(2)
-        location_dates_data = os.path.join("data", self.club_name, self.sc_folder_name, f"{date.year}_{month_frmt}.csv")
+        month_frmt = (str(date_selected.month)).zfill(2)
+        location_dates_data = os.path.join("data", self.club_name, self.sc_folder_name, f"{date_selected.year}_{month_frmt}.csv")
         if not os.path.exists(location_dates_data):
-            url_to_parse = f"{self.club_page_url}/{date.year}/{month_frmt}/"
+            url_to_parse = f"{self.club_page_url}/{date_selected.year}/{month_frmt}/"
             data_month = self.extract_content_from_page(url_to_parse)
-            self.save_data(data_month, date.year, month_frmt)
+            self.save_data(data_month, date_selected.year, month_frmt)
         else:
             data_month = pd.read_csv(location_dates_data, index_col=0, parse_dates=["date"])
 
-        index_today = data_month.date == pd.to_datetime(date)
+        index_today = data_month.date == pd.to_datetime(date_selected)
         artists_data = data_month[index_today]
 
         if not "soundcloud_url" in artists_data.columns:

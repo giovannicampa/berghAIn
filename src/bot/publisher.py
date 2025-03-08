@@ -22,7 +22,7 @@ def send_welcome(message):
 
 def send_prediction(chat_id_to_send):
     try:
-        predicted_hours, artists_data = pred.predict(date=datetime.today().date())
+        predicted_hours, features, artists_data = pred.predict(date=datetime.today().date())
 
         artists_data.sort_values("followers", ascending=False, inplace=True)
         artists_data.reset_index(drop=True, inplace=True)
