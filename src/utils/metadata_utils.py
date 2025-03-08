@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, time
 
 import numpy as np
 import pandas as pd
@@ -23,18 +23,38 @@ T = 365  # Period of the sinusoid
 HOUR = 23
 
 
-def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
+def get_weather_data(city="Berlin", start_date: datetime = None, end_date: datetime = None) -> pd.DataFrame:
     base_url = "http://api.weatherapi.com/v1/history.json"
     weather_data = []
 
+    start_date = datetime.combine(start_date, time(00, 00, 00))
+
+    # If end date is equal to start date or not set, get the data for the whole day
+    if start_date == end_date or end_date is None:
+        end_date = datetime.combine(start_date, time(23, 59, 59))
+
+    # TODO: fix this logic
     # Load saved data for historical training
     if start_date < date.today() - timedelta(2):
-        weather_data = pd.concat([pd.read_csv(file, parse_dates=["time"]) for file in glob("data/wetter_berlin/*.csv")])
-        weather_data.rename(
+        weather_df = pd.concat([pd.read_csv(file, parse_dates=["time"]) for file in glob("data/wetter_berlin/*.csv")])
+        weather_df.rename(
             columns={"time": "date", "precipitation (mm)": "precipitation", "temperature_2m (°C)": "temperature"},
             inplace=True,
         )
-        weather_data["date"] = weather_data["date"].dt.date
+        weather_df = weather_df[
+            (weather_df.date >= pd.to_datetime(start_date)) & (weather_df.date <= pd.to_datetime(end_date))
+        ]
+
+        weather_data = {}
+        for _, row in weather_df.iterrows():
+            day_str = row["date"].strftime("%Y-%m-%d")
+            hour_str = row["date"].hour
+            if day_str not in weather_data:
+                weather_data[day_str] = {"hour": {}}
+            weather_data[day_str]["hour"][hour_str] = {
+                "precip_mm": row["precipitation"],
+                "temp_c": row["temperature"],
+            }
 
     # Get newer data from API
     else:
@@ -57,19 +77,19 @@ def get_weather_data(city="Berlin", start_date="", end_date="") -> pd.DataFrame:
 
             start_date += pd.Timedelta(days=CHUNK_SIZE)
 
-        weather_data_by_date = [
-            {
-                "date": datetime.strptime(day["date"], "%Y-%m-%d").date(),
-                "precipitation": day["hour"][HOUR]["precip_mm"],
-                "temperature": day["hour"][HOUR]["temp_c"],
-            }
-            for day in weather_data
-            if len(day["hour"]) > 0
-        ]
-        weather_data_by_date = pd.DataFrame(weather_data_by_date)
+    weather_data_by_date = [
+        {
+            "date": datetime.strptime(day["date"], "%Y-%m-%d").date(),
+            "precipitation": day["hour"][HOUR]["precip_mm"],
+            "temperature": day["hour"][HOUR]["temp_c"],
+        }
+        for day in weather_data
+        if len(day["hour"]) > 0
+    ]
+    weather_data_by_date = pd.DataFrame(weather_data_by_date)
 
     weather_data_by_date = weather_data_by_date[
-        (weather_data_by_date["date"] <= start_date) & (weather_data_by_date["date"] >= end_date)
+        (weather_data_by_date["date"] <= start_date.date()) & (weather_data_by_date["date"] >= end_date.date())
     ]
 
     weather_data_grouped = weather_data_by_date.groupby("date")["temperature"].min().reset_index()
