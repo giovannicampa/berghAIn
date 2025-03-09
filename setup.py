@@ -18,6 +18,9 @@ setup(
     extras_require={
         "dev": [
             "pre-commit==3.3.3",
+            "black==23.7.0",
+            "isort==5.13.2"
         ]
-    }
+    },
+    python_requires=">=3.8"
 )
