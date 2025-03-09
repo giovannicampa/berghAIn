@@ -12,5 +12,8 @@
       "ms-azuretools.vscode-docker"
   ],
   "forwardPorts": [8000, 3306],
-  "runServices": ["mysql", "app"]
+  "runServices": ["mysql", "app"],
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/bin/python3.8"
+}
 }
