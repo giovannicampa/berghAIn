@@ -1,0 +1,19 @@
+{
+  "name": "My Dev Container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/berghain",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "root",
+  "postCreateCommand": "pip install -e .[dev]",
+  "extensions": [
+      "ms-python.python",
+      "ms-python.vscode-pylance",
+      "ms-azuretools.vscode-docker"
+  ],
+  "forwardPorts": [8000, 3306],
+  "runServices": ["mysql", "app"],
+  "settings": {
+    "python.defaultInterpreterPath": "/usr/bin/python3.8"
+}
+}
